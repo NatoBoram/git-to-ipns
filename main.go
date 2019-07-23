@@ -92,8 +92,7 @@ func initIPFS() (err error) {
 func initBager() {
 
 	// Options
-	options := badger.DefaultOptions
-	options.Dir = "~/.config/Gi"
+	options := badger.DefaultOptions("~/.config/Gi")
 
 	db, err := badger.Open(options)
 	if err != nil {
