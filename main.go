@@ -2,14 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"strconv"
+	"os/user"
 
 	badger "github.com/dgraph-io/badger"
-	"github.com/google/uuid"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -23,8 +19,14 @@ func main() {
 	fmt.Println(aurora.Bold("Contact :"), aurora.Blue("https://gitlab.com/NatoBoram/git-to-ipfs"))
 	fmt.Println("")
 
+	// User
+	path, err := initUser()
+	if err != nil {
+		return
+	}
+
 	// Git
-	err := initGit()
+	err = initGit()
 	if err != nil {
 		return
 	}
@@ -35,7 +37,15 @@ func main() {
 		return
 	}
 
-	receiveURL("git@gitlab.com:NatoBoram/git-to-ipfs.git")
+	// Badger
+	db, err := initBager(path)
+	if err != nil {
+		return
+	}
+
+	receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
+
+	<-make(chan struct{})
 }
 
 func initGit() (err error) {
@@ -89,97 +99,26 @@ func initIPFS() (err error) {
 	return
 }
 
-func initBager() {
+func initBager(homeDir string) (db *badger.DB, err error) {
 
 	// Options
-	options := badger.DefaultOptions("~/.config/Gi")
+	options := badger.DefaultOptions(homeDir + rootDir)
 
-	db, err := badger.Open(options)
+	db, err = badger.Open(options)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-}
-
-func receiveURL(url string) {
-
-	// UUID
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		fmt.Println("Couldn't generate a new UUID.")
+		fmt.Println("Couldn't open a Badger Database.")
 		fmt.Println(err.Error())
-		return
 	}
 
-	fmt.Println(aurora.Bold("URL :"), aurora.Blue(url))
-	fmt.Println(aurora.Bold("UUID :"), uuid.String())
+	return db, err
+}
 
-	// Clone
-	out, err := exec.Command("git", "clone", url, uuid.String()).Output()
+func initUser() (string, error) {
+	usr, err := user.Current()
 	if err != nil {
-		fmt.Println("Couldn't clone the repository.")
-		fmt.Println(aurora.Bold("Command :"), "git clone", aurora.Blue(url), uuid.String())
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-	fmt.Println(string(out))
-
-	// Size
-	size, err := dirSize(uuid.String())
-	if err != nil {
-		fmt.Println("Couldn't get the size of the git repository.")
+		fmt.Println("Couldn't get the current user.")
 		fmt.Println(err.Error())
-		return
 	}
 
-	rmin := rmin(size)
-	rmax := rmax(size)
-
-	// IPFS-Cluster
-	out, err = exec.Command("ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--name", url, "--replication-min", rmin, "--replication-max", rmax, uuid.String()).Output()
-	if err != nil {
-		fmt.Println("Couldn't add the repository to IPFS.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--name", url, "--replication-min", rmin, "--replication-max", rmax, uuid.String())
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
-	hash := string(out)
-	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(hash))
-
-}
-
-func dirSize(path string) (size int64, err error) {
-	err = filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			size += info.Size()
-		}
-		return err
-	})
-	return size, err
-}
-
-func rmin(size int64) string {
-	return strconv.FormatInt(1, 10)
-}
-
-func rmax(size int64) string {
-	return strconv.FormatInt(size/(speed*seconds)+1, 10)
+	return usr.HomeDir, err
 }

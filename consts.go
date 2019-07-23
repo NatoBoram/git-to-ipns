@@ -4,8 +4,7 @@ import "os"
 
 // Paths
 const (
-	rootFolder   = "./Gi"
-	databasePath = rootFolder + "/database.json"
+	rootDir = "/.config/gi"
 )
 
 // Permissions
