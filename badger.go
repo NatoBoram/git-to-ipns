@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
+
 	badger "github.com/dgraph-io/badger"
 	"golang.org/x/xerrors"
 )
 
-func getFromURL(db *badger.DB, url string, callback func(repo Repo, err error)) (err error) {
+func getFromURL(db *badger.DB, url string, callback func(db *badger.DB, repo Repo)) (err error) {
 	err = db.View(func(txn *badger.Txn) (err error) {
 
 		// Select from URL
@@ -24,7 +26,7 @@ func getFromURL(db *badger.DB, url string, callback func(repo Repo, err error)) 
 			}
 
 			// Execute the callback only if there's no error.
-			callback(repo, err)
+			callback(db, repo)
 
 			// Unreachable code
 			return nil
@@ -64,6 +66,45 @@ func (repo Repo) save(db *badger.DB) (err error) {
 
 	if err != nil {
 		return xerrors.Errorf("Couldn't create an update transaction : %w", err)
+	}
+
+	return nil
+}
+
+func getRepos(db *badger.DB, ch chan Repo) error {
+
+	// Create a view
+	err := db.View(func(txn *badger.Txn) error {
+
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		defer close(ch)
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+
+			err := item.Value(func(v []byte) error {
+
+				repo, err := decodeRepo(v)
+				if err != nil {
+					return xerrors.Errorf("Couldn't decode a repo : %w", err)
+				}
+
+				ch <- repo
+
+				return nil
+			})
+
+			if err != nil {
+				fmt.Println("Couldn't get a value.")
+				fmt.Println(err.Error())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return xerrors.Errorf("Couldn't create a view : %w", err)
 	}
 
 	return nil

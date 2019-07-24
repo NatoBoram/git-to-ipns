@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
+	"time"
 
 	badger "github.com/dgraph-io/badger"
 	"github.com/logrusorgru/aurora"
@@ -42,9 +46,35 @@ func main() {
 	if err != nil {
 		return
 	}
+	defer db.Close()
 
-	receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
+	go func() {
+		for {
+			onAllRepos(db)
+			time.Sleep(24 * time.Hour)
+		}
+	}()
 
+	// receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
+
+	// Listen to CTRL+C
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for _ = range c {
+
+			// Close database
+			err = db.Close()
+			if err != nil {
+				fmt.Println("Couldn't save the database.")
+				log.Fatalln(err.Error())
+			}
+
+			os.Exit(0)
+		}
+	}()
+
+	// Wait
 	<-make(chan struct{})
 }
 
