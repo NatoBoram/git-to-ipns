@@ -1,0 +1,20 @@
+image: golang:1.12.7
+
+before_script:
+  - go get -u -v github.com/GeertJohan/go.rice/rice
+  - go get -u -v gitlab.com/NatoBoram/git-to-ipfs
+  - go clean
+
+build:
+  stage: build
+  script:
+    - rice embed-go
+    - go build ./...
+
+test:
+  stage: test
+  script:
+    - go test ./...
+
+after_script:
+  - go clean
