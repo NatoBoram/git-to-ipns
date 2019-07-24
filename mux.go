@@ -28,5 +28,27 @@ func errorf(w http.ResponseWriter, code int, format string, a ...interface{}) {
 }
 
 func addHandler(db *badger.DB, w http.ResponseWriter, r *http.Request) {
+	var received AddURL
 
+	if err := json.NewDecoder(r.Body).Decode(&received); err != nil {
+		if _, ok := err.(*json.SyntaxError); ok {
+			errorf(w, http.StatusBadRequest, "Body was not valid JSON: %v", err)
+			return
+		}
+		errorf(w, http.StatusInternalServerError, "Could not get body: %v", err)
+		return
+	}
+
+	repo, err := receiveURL(db, received.URL)
+	if err != nil {
+		errorf(w, http.StatusInternalServerError, "Couldn't properly handle the URL : %v", err)
+		return
+	}
+
+	b, err := json.Marshal(repo)
+	if err != nil {
+		errorf(w, http.StatusInternalServerError, "Could not marshal JSON: %v", err)
+		return
+	}
+	w.Write(b)
 }

@@ -12,17 +12,21 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func receiveURL(db *badger.DB, url string) {
-	err := getFromURL(db, url, onOldRepo)
-	if xerrors.Is(err, badger.ErrKeyNotFound) {
-		onNewRepo(db, url)
-	} else if err != nil {
-		fmt.Println(err.Error())
+func receiveURL(db *badger.DB, url string) (repo Repo, err error) {
+	ch := make(chan Repo, 1)
+	err = getFromURL(db, url, ch, onOldRepo, onNewRepo)
+	if err != nil {
+		close(ch)
+		return repo, xerrors.Errorf("Couldn't get a repo from its URL : %w", err)
 	}
+	repo = <-ch
+	return
 }
 
 func onAllRepos(db *badger.DB) {
 	fmt.Println("Refreshing all repos...")
+	fmt.Println()
+
 	ch := make(chan Repo, runtime.NumCPU())
 
 	go func() {
@@ -51,7 +55,7 @@ func onAllRepos(db *badger.DB) {
 	return
 }
 
-func onOldRepo(db *badger.DB, repo Repo) {
+func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 
 	// Show old values
 	fmt.Println(aurora.Bold("UUID :"), repo.UUID)
@@ -72,7 +76,7 @@ func onOldRepo(db *badger.DB, repo Repo) {
 	if err != nil {
 		fmt.Println("Couldn't get the size of the git repository.")
 		fmt.Println(err.Error())
-		return
+		return repo, err
 	}
 
 	rmin := rmin(size)
@@ -92,10 +96,11 @@ func onOldRepo(db *badger.DB, repo Repo) {
 	if err != nil {
 		fmt.Println("Couldn't save the newly created repo.")
 		fmt.Println(err.Error())
-		return
+		return repo, err
 	}
 
 	fmt.Println("Saved", aurora.Blue(repo.URL).String()+".")
+	return repo, err
 }
 
 func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
@@ -160,6 +165,5 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 	}
 
 	fmt.Println("Saved", aurora.Blue(link).String()+".")
-
 	return repo, err
 }

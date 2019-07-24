@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"time"
 
+	rice "github.com/GeertJohan/go.rice"
 	badger "github.com/dgraph-io/badger"
 	"github.com/gorilla/mux"
 	"github.com/logrusorgru/aurora"
@@ -50,6 +51,7 @@ func main() {
 	}
 	defer db.Close()
 
+	// Refresh repos
 	go func() {
 		for {
 			onAllRepos(db)
@@ -58,6 +60,9 @@ func main() {
 	}()
 
 	// receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
+
+	// Router
+	initMux(db)
 
 	// Listen to CTRL+C
 	c := make(chan os.Signal, 1)
@@ -159,10 +164,8 @@ func initUser() (string, error) {
 func initMux(db *badger.DB) {
 	r := mux.NewRouter()
 
-	r.Path("/add").Methods("POST").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { addHandler(db, w, r) })
+	r.HandleFunc("/api/add/", func(w http.ResponseWriter, r *http.Request) { addHandler(db, w, r) }).Methods("POST")
+	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("web").HTTPBox()))
 
-	http.Handle("/", r)
-	port := 62458
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(":62458", r))
 }

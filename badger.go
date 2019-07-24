@@ -7,12 +7,18 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func getFromURL(db *badger.DB, url string, callback func(db *badger.DB, repo Repo)) (err error) {
+func getFromURL(db *badger.DB, link string, ch chan Repo, oldRepo func(*badger.DB, Repo) (Repo, error), newRepo func(*badger.DB, string) (Repo, error)) (err error) {
 	err = db.View(func(txn *badger.Txn) (err error) {
 
 		// Select from URL
-		item, err := txn.Get([]byte(url))
-		if err != nil {
+		item, err := txn.Get([]byte(link))
+		if err == badger.ErrKeyNotFound {
+			repo, err := newRepo(db, link)
+			if err != nil {
+				return xerrors.Errorf("Couldn't add a new repo : %w", err)
+			}
+			ch <- repo
+		} else if err != nil {
 			return xerrors.Errorf("Couldn't select an URL : %w", err)
 		}
 
@@ -26,7 +32,11 @@ func getFromURL(db *badger.DB, url string, callback func(db *badger.DB, repo Rep
 			}
 
 			// Execute the callback only if there's no error.
-			callback(db, repo)
+			repo, err = oldRepo(db, repo)
+			if err != nil {
+				return xerrors.Errorf("Couldn't refresh an old repo : %w", err)
+			}
+			ch <- repo
 
 			// Unreachable code
 			return nil
