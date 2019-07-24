@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger"
+	"github.com/gorilla/mux"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -140,6 +142,7 @@ func initBager(homeDir string) (db *badger.DB, err error) {
 		fmt.Println(err.Error())
 	}
 
+	fmt.Println()
 	return db, err
 }
 
@@ -151,4 +154,15 @@ func initUser() (string, error) {
 	}
 
 	return usr.HomeDir, err
+}
+
+func initMux(db *badger.DB) {
+	r := mux.NewRouter()
+
+	r.Path("/add").Methods("POST").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { addHandler(db, w, r) })
+
+	http.Handle("/", r)
+	port := 62458
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }

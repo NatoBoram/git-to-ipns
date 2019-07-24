@@ -8,3 +8,8 @@ type Repo struct {
 	Key  string // 4. Generate a key
 	IPNS string // 5. Add it to IPNS
 }
+
+// AddURL is the object accepted by the `/add` API endpoint.
+type AddURL struct {
+	URL string
+}
