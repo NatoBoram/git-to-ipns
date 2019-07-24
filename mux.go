@@ -29,23 +29,4 @@ func errorf(w http.ResponseWriter, code int, format string, a ...interface{}) {
 
 func addHandler(db *badger.DB, w http.ResponseWriter, r *http.Request) {
 
-	var msg AddURL
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		if _, ok := err.(*json.SyntaxError); ok {
-			errorf(w, http.StatusBadRequest, "Body was not valid JSON: %v", err)
-			return
-		}
-		errorf(w, http.StatusInternalServerError, "Could not get body: %v", err)
-		return
-	}
-
-	receiveURL(db, msg.URL)
-
-	b, err := json.Marshal(msg)
-	if err != nil {
-		errorf(w, http.StatusInternalServerError, "Could not marshal JSON: %v", err)
-		return
-	}
-	w.Write(b)
-
 }

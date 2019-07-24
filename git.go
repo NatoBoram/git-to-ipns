@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
-	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
@@ -64,37 +62,10 @@ func onOldRepo(db *badger.DB, repo Repo) {
 	fmt.Println()
 
 	// Pull
-	out, err := exec.Command("git", "-C", repo.UUID, "pull").Output()
-	if err != nil {
-		fmt.Println("Couldn't clone the repository.")
-		fmt.Println(aurora.Bold("Command :"), "git", "-C", repo.UUID, "pull")
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-	// fmt.Println(string(out))
+	out, err := gitPull(repo.UUID)
 
 	// Remove old IPFS
-	out, err = exec.Command("ipfs-cluster-ctl", "pin", "rm", repo.IPFS).Output()
-	if err != nil {
-		fmt.Println("Couldn't add the repository to IPFS.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs-cluster-ctl", "pin", "rm", aurora.Cyan(repo.IPFS))
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
+	out, err = ipfsClusterRm(repo.IPFS)
 
 	// Size
 	size, err := dirSize(repo.UUID)
@@ -108,40 +79,12 @@ func onOldRepo(db *badger.DB, repo Repo) {
 	rmax := rmax(size)
 
 	// Add new IPFS
-	out, err = exec.Command("ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", repo.URL, "--replication-min", rmin, "--replication-max", rmax, repo.UUID).Output()
-	if err != nil {
-		fmt.Println("Couldn't add the repository to IPFS.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", aurora.Blue(repo.URL), "--replication-min", aurora.Bold(rmin), "--replication-max", aurora.Bold(rmax), repo.UUID)
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
+	out, err = ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
 	repo.IPFS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(repo.IPFS))
 
 	// IPNS
-	out, err = exec.Command("ipfs", "name", "publish", "--key", repo.Key, "--quieter", "/ipfs/"+repo.IPFS).Output()
-	if err != nil {
-		fmt.Println("Couldn't generate a new key.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs", "name", "publish", "--key", repo.Key, "--quieter", aurora.Cyan("/ipfs/"+repo.IPFS))
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
+	out, err = ipfsNamePublish(repo.Key, repo.IPFS)
 	repo.IPNS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(repo.IPNS))
 
@@ -155,7 +98,7 @@ func onOldRepo(db *badger.DB, repo Repo) {
 	fmt.Println("Saved", aurora.Blue(repo.URL).String()+".")
 }
 
-func onNewRepo(db *badger.DB, link string) {
+func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 
 	// URL
 	link = strings.TrimSpace(link)
@@ -173,21 +116,7 @@ func onNewRepo(db *badger.DB, link string) {
 	fmt.Println(aurora.Bold("UUID :"), uuid)
 
 	// Clone
-	out, err := exec.Command("git", "clone", link, uuid).Output()
-	if err != nil {
-		fmt.Println("Couldn't clone the repository.")
-		fmt.Println(aurora.Bold("Command :"), "git clone", aurora.Blue(link), uuid)
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-	// fmt.Println(string(out))
+	out, err := gitClone(link, uuid)
 
 	// Size
 	size, err := dirSize(uuid)
@@ -201,64 +130,21 @@ func onNewRepo(db *badger.DB, link string) {
 	rmax := rmax(size)
 
 	// IPFS-Cluster
-	out, err = exec.Command("ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", link, "--replication-min", rmin, "--replication-max", rmax, uuid).Output()
-	if err != nil {
-		fmt.Println("Couldn't add the repository to IPFS.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", aurora.Blue(link), "--replication-min", aurora.Bold(rmin), "--replication-max", aurora.Bold(rmax), uuid)
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
+	out, err = ipfsClusterAdd(link, rmin, rmax, uuid)
 	ipfs := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(ipfs))
 
 	// Key
-	escaped := url.PathEscape(link)
-	out, err = exec.Command("ipfs", "key", "gen", "--type", "ed25519", escaped).Output()
-	if err != nil {
-		fmt.Println("Couldn't generate a new key.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs", "key", "gen", "--type", "ed25519", aurora.Blue(escaped))
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
+	out, err = ipfsKeyGen(link)
 	key := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("Key :"), key)
 
 	// IPNS
-	out, err = exec.Command("ipfs", "name", "publish", "--key", key, "--quieter", "/ipfs/"+ipfs).Output()
-	if err != nil {
-		fmt.Println("Couldn't generate a new key.")
-		fmt.Println(aurora.Bold("Command :"), "ipfs", "name", "publish", "--key", key, "--quieter", aurora.Cyan("/ipfs/"+ipfs))
-
-		// Log the error from the command
-		ee, ok := err.(*exec.ExitError)
-		if ok {
-			fmt.Println(string(ee.Stderr))
-		}
-
-		fmt.Println(string(out))
-		return
-	}
-
+	out, err = ipfsNamePublish(key, ipfs)
 	ipns := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(ipns))
 
-	repo := Repo{
+	repo = Repo{
 		UUID: uuid,
 		URL:  link,
 		IPFS: ipfs,
@@ -274,4 +160,6 @@ func onNewRepo(db *badger.DB, link string) {
 	}
 
 	fmt.Println("Saved", aurora.Blue(link).String()+".")
+
+	return repo, err
 }
