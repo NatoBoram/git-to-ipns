@@ -5,10 +5,63 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+	<!-- Bootstrap -->
+	<link href="https://bafybeidxhhjkylkzpudswjbbixwzohrmx4fa5cs35xe7ntxskpgtpaszlm.cf-ipfs.com/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" rel="stylesheet">
+	<script src="https://bafybeiagg6b4qhsazsp7u3vq2qg4ivi2s2v4dj6lctp2akys3kkussx624.cf-ipfs.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+	<script src="https://bafybeid6vxro32jo4fy5bqvwqhnr34rowuqepb75ga6fvhq2vmskztz5wq.cf-ipfs.com/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://bafybeidt325fl7nyxetqlvzvdt6erb5izgayjol3zdwqi6jk3hipfhaolm.cf-ipfs.com/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+	<!-- Hogan.JS -->
+	<script src="https://bafybeih6awiulizmtw2clv4smfbjd6borv733bun6g3226mgv537e6g7ei.cf-ipfs.com/hogan-3.0.1.js"></script>
+
+	<!-- Templates -->
+	<script src="templates/result_card.js"></script>
+	<script src="templates/spinner_grow.js"></script>
+
+	<!-- App -->
+	<script src="js/home.js"></script>
+
 	<title>Git to IPFS</title>
 </head>
 
 <body>
+	<header>
+
+		<!-- Navbar -->
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+			<a class="navbar-brand" href="/">Git on IPNS</a>
+		</nav>
+
+		<!-- Jumbotron -->
+		<div class="jumbotron jumbotron-fluid">
+			<div class="container">
+				<h1 class="display-4">Git on IPNS</h1>
+				<p class="lead">Put your website on IPFS with a permanent IPNS URL.</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- Main -->
+	<main class="container">
+
+		<!-- Form -->
+		<form class="m-3">
+
+			<!-- Git URL -->
+			<div class="form-group">
+				<label for="gitURLInput">Git URL</label>
+				<input type="text" class="form-control" id="gitURLInput" placeholder="git@gitlab.com:NatoBoram/git-to-ipfs.git" required>
+				<small class="form-text text-muted"></small>
+			</div>
+
+			<!-- Submit -->
+			<button type="button" class="btn btn-primary" onclick="gi.home.submit()">Submit</button>
+		</form>
+
+		<!-- Results -->
+		<div id="card_result" class="m-3"></div>
+	</main>
 
 </body>
 
