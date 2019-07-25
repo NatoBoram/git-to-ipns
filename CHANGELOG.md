@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 Initial release. It has a web interface, can `git clone` repositories, add them to IPFS Cluster, create IPFS keys, then add the repo to IPNS.
 There's no authentication.
+The web interface doesn't check for errors, so there's a few bugs there.
 
 ## Types of changes
 
