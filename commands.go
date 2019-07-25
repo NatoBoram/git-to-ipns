@@ -12,7 +12,7 @@ func run(cmd *exec.Cmd, path string, errMessage string, cmdMessage ...interface{
 
 	// Default path
 	if path != "." {
-		cmd.Path = path
+		cmd.Dir = path
 	}
 
 	out, err = cmd.Output()

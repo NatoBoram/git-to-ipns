@@ -74,7 +74,7 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 	out, err = ipfsClusterRm(repo.IPFS)
 
 	// Size
-	size, err := dirSize(repo.UUID)
+	size, err := dirSize(dirHome + dirGit + "/" + repo.UUID)
 	if err != nil {
 		fmt.Println("Couldn't get the size of the git repository.")
 		fmt.Println(err.Error())
@@ -124,9 +124,12 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 
 	// Clone
 	out, err := gitClone(link, uuid)
+	if err != nil {
+		return
+	}
 
 	// Size
-	size, err := dirSize(uuid)
+	size, err := dirSize(dirHome + dirGit + "/" + repo.UUID)
 	if err != nil {
 		fmt.Println("Couldn't get the size of the git repository.")
 		fmt.Println(err.Error())
@@ -138,16 +141,28 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 
 	// IPFS-Cluster
 	out, err = ipfsClusterAdd(link, rmin, rmax, uuid)
+	if err != nil {
+		return
+	}
+
 	ipfs := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(ipfs))
 
 	// Key
 	out, err = ipfsKeyGen(link)
+	if err != nil {
+		return
+	}
+
 	key := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("Key :"), key)
 
 	// IPNS
 	out, err = ipfsNamePublish(key, ipfs)
+	if err != nil {
+		return
+	}
+
 	ipns := strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(ipns))
 
