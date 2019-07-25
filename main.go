@@ -188,5 +188,5 @@ func initMux(db *badger.DB) {
 
 	fmt.Println("Server started at", aurora.Blue("http://localhost:62458/"))
 
-	go log.Fatal(http.ListenAndServe(":62458", r))
+	log.Fatal(http.ListenAndServe(":62458", r))
 }
