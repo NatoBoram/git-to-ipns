@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Fixed
 
+* Fixed some potential issues when refreshing old repositories that contains errors
+
 ### Security
 
 ## [1.0.0] - 2019-07-25

@@ -68,10 +68,16 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 	fmt.Println()
 
 	// Pull
-	out, err := gitPull(repo.UUID)
+	_, err := gitPull(repo.UUID)
+	if err != nil {
+		return repo, err
+	}
 
 	// Remove old IPFS
-	out, err = ipfsClusterRm(repo.IPFS)
+	_, err = ipfsClusterRm(repo.IPFS)
+	if err != nil {
+		return repo, err
+	}
 
 	// Size
 	size, err := dirSize(dirHome + dirGit + "/" + repo.UUID)
@@ -85,12 +91,20 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 	rmax := rmax(size)
 
 	// Add new IPFS
-	out, err = ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
+	out, err := ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
+	if err != nil {
+		return repo, err
+	}
+
 	repo.IPFS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(repo.IPFS))
 
 	// IPNS
 	out, err = ipfsNamePublish(repo.Key, repo.IPFS)
+	if err != nil {
+		return repo, err
+	}
+
 	repo.IPNS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(repo.IPNS))
 
@@ -123,7 +137,7 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 	fmt.Println(aurora.Bold("UUID :"), uuid)
 
 	// Clone
-	out, err := gitClone(link, uuid)
+	_, err = gitClone(link, uuid)
 	if err != nil {
 		return
 	}
@@ -140,7 +154,7 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 	rmax := rmax(size)
 
 	// IPFS-Cluster
-	out, err = ipfsClusterAdd(link, rmin, rmax, uuid)
+	out, err := ipfsClusterAdd(link, rmin, rmax, uuid)
 	if err != nil {
 		return
 	}
