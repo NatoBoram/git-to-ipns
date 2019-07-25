@@ -2,9 +2,12 @@ package main
 
 import "os"
 
-// Paths
+// Relative paths for the whole application.
+// Use them with `dirHome`.
 const (
-	rootDir = "/.config/gi"
+	dirConfig = "/.config/gi"
+	dirBadger = dirConfig + "/badger"
+	dirGit    = dirConfig + "/git"
 )
 
 // Permissions
@@ -13,7 +16,7 @@ const (
 	permPrivateFile      os.FileMode = 0600
 )
 
-// Calculation
+// Calculations
 const (
 	speed   = 10 * 1024 * 1024
 	seconds = 60

@@ -31,12 +31,7 @@ func main() {
 	if err != nil {
 		return
 	}
-
-	// Git
-	err = initGit()
-	if err != nil {
-		return
-	}
+	dirHome = path
 
 	// IPFS
 	err = initIPFS()
@@ -44,8 +39,14 @@ func main() {
 		return
 	}
 
+	// Git
+	err = initGit()
+	if err != nil {
+		return
+	}
+
 	// Badger
-	db, err := initBager(path)
+	db, err := initBager()
 	if err != nil {
 		return
 	}
@@ -59,6 +60,7 @@ func main() {
 		}
 	}()
 
+	// Test
 	// receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
 
 	// Router
@@ -86,6 +88,14 @@ func main() {
 }
 
 func initGit() (err error) {
+
+	// Git Directory
+	err = os.MkdirAll(dirHome+dirGit, permPrivateDirectory)
+	if err != nil {
+		fmt.Println("Couldn't create the git directory.")
+		fmt.Println(err.Error())
+		return
+	}
 
 	// Check for Git
 	path, err := exec.LookPath("git")
@@ -136,10 +146,18 @@ func initIPFS() (err error) {
 	return
 }
 
-func initBager(homeDir string) (db *badger.DB, err error) {
+func initBager() (db *badger.DB, err error) {
+
+	// Badger Directory
+	err = os.MkdirAll(dirHome+dirBadger, permPrivateDirectory)
+	if err != nil {
+		fmt.Println("Couldn't create the badger directory.")
+		fmt.Println(err.Error())
+		return
+	}
 
 	// Options
-	options := badger.DefaultOptions(homeDir + rootDir)
+	options := badger.DefaultOptions(dirHome + dirBadger)
 
 	db, err = badger.Open(options)
 	if err != nil {
@@ -151,7 +169,8 @@ func initBager(homeDir string) (db *badger.DB, err error) {
 	return db, err
 }
 
-func initUser() (string, error) {
+func initUser() (path string, err error) {
+
 	usr, err := user.Current()
 	if err != nil {
 		fmt.Println("Couldn't get the current user.")
