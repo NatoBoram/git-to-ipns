@@ -50,7 +50,9 @@ func onAllRepos(db *badger.DB) {
 	}
 
 	wg.Wait()
+
 	fmt.Println("All repos are refreshed.")
+	fmt.Println()
 
 	return
 }

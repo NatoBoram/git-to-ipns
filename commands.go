@@ -35,7 +35,7 @@ func run(cmd *exec.Cmd, path string, errMessage string, cmdMessage ...interface{
 func ipfsClusterAdd(link string, rmin string, rmax string, uuid string) (out []byte, err error) {
 	return run(
 		exec.Command("ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", link, "--replication-min", rmin, "--replication-max", rmax, uuid),
-		".",
+		dirHome+dirGit,
 		"Couldn't add the repository to IPFS.",
 		aurora.Bold("Command :"), "ipfs-cluster-ctl", "add", "--recursive", "--quieter", "--chunker=rabin", "--cid-version=1", "--name", aurora.Blue(link), "--replication-min", aurora.Bold(rmin), "--replication-max", aurora.Bold(rmax), uuid,
 	)

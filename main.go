@@ -64,7 +64,7 @@ func main() {
 	// receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
 
 	// Router
-	initMux(db)
+	go initMux(db)
 
 	// Listen to CTRL+C
 	c := make(chan os.Signal, 1)
@@ -186,5 +186,7 @@ func initMux(db *badger.DB) {
 	r.HandleFunc("/api/add/", func(w http.ResponseWriter, r *http.Request) { addHandler(db, w, r) }).Methods("POST")
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("web").HTTPBox()))
 
-	log.Fatal(http.ListenAndServe(":62458", r))
+	fmt.Println("Server started at", aurora.Blue("http://localhost:62458/"))
+
+	go log.Fatal(http.ListenAndServe(":62458", r))
 }
