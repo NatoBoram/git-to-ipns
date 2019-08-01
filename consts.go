@@ -1,3 +1,5 @@
+// Constants.
+
 package main
 
 import "os"
@@ -5,7 +7,7 @@ import "os"
 // Relative paths for the whole application.
 // Use them with `dirHome`.
 const (
-	dirConfig = "/.config/gi"
+	dirConfig = "/.config/gipns"
 	dirBadger = dirConfig + "/badger"
 	dirGit    = dirConfig + "/git"
 )
@@ -20,4 +22,10 @@ const (
 const (
 	speed   = 10 * 1024 * 1024
 	seconds = 60
+)
+
+// Public Gateways
+const (
+	pgPermaweb = "/dnsaddr/permaweb.io"
+	pgLibp2p   = "/dnsaddr/bootstrap.libp2p.io"
 )

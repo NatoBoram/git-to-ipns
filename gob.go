@@ -1,3 +1,5 @@
+// Encoding and decoding on gob objects.
+
 package main
 
 import (

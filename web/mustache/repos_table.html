@@ -1,0 +1,26 @@
+{{#repos}}
+	<div class="card m-3">
+		<div class="card-body">
+			<dl>
+
+				<dt>UUID</dt>
+				<dd>{{UUID}}</dd>
+
+				<dt>URL</dt>
+				<dd>{{URL}}</dd>
+
+				<dt>IPFS</dt>
+				<dd><a href="https://permaweb.io/ipfs/{{IPFS}}/">{{IPFS}}</a></dd>
+
+				<dt>Key</dt>
+				<dd>{{Key}}</dd>
+
+				<dt>IPNS</dt>
+				<dd><a href="https://permaweb.io/ipns/{{IPNS}}/">{{IPNS}}</a></dd>
+
+			</dl>
+
+			<button type="button" class="btn btn-danger" onclick="gi.home.delete('{{URL}}')">Delete</button>
+		</div>
+	</div>
+{{/repos}}

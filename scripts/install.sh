@@ -1,4 +1,4 @@
 #!/bin/sh
 
-./tools/build.sh
+./scripts/build.sh
 go install .
