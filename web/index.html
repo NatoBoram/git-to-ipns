@@ -18,6 +18,9 @@
 	<!-- Templates -->
 	<script src="templates/result_card.js"></script>
 	<script src="templates/spinner_grow.js"></script>
+	<script src="templates/repos_table.js"></script>
+	<script src="templates/alert_danger.js"></script>
+	<script src="templates/alert_success.js"></script>
 
 	<!-- App -->
 	<script src="js/home.js"></script>
@@ -45,6 +48,11 @@
 	<!-- Main -->
 	<main class="container">
 
+		<!-- Alerts when adding a new repo -->
+		<div id="card_result" class="m-3">
+			<!-- Hogan.JS -->
+		</div>
+
 		<!-- Form -->
 		<form class="m-3">
 
@@ -59,8 +67,17 @@
 			<button type="button" class="btn btn-primary" onclick="gi.home.submit()">Submit</button>
 		</form>
 
-		<!-- Results -->
-		<div id="card_result" class="m-3"></div>
+		<!-- Alerts when dealing with the list of repos -->
+		<div id="list_alert" class="m-3">
+			<!-- Hogan.JS -->
+		</div>
+
+		<!-- List -->
+		<div id="repos_table" class="m-3">
+			<!-- Hogan.JS -->
+			<div class="spinner-grow m-auto"></div>
+		</div>
+
 	</main>
 
 </body>
