@@ -6,15 +6,15 @@ before_script:
   - rice embed-go
   - go clean
 
-test:
-  stage: test
-  script:
-    - go test -v -cover -race ./...
-
 build:
   stage: build
   script:
     - go build
+
+test:
+  stage: test
+  script:
+    - go test -v -cover -race ./...
 
 after_script:
   - go clean
