@@ -1,3 +1,5 @@
+// Operations and flow control on Git repositories managed by the application.
+
 package main
 
 import (
@@ -12,38 +14,59 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func receiveURL(db *badger.DB, url string) (repo Repo, err error) {
-	ch := make(chan Repo, 1)
-	err = getFromURL(db, url, ch, onOldRepo, onNewRepo)
-	if err != nil {
-		close(ch)
-		return repo, xerrors.Errorf("Couldn't get a repo from its URL : %w", err)
+func addURL(db *badger.DB, link string) (repo Repo, err error) {
+	repo, err = dbGet(db, link)
+	if xerrors.Is(err, badger.ErrKeyNotFound) {
+		return onNewRepo(db, link)
+	} else if err != nil {
+		return
 	}
-	repo = <-ch
-	return
+	return onOldRepo(db, repo)
+}
+
+// rmRepo completely removes any traces of a repository in the system.
+func rmRepo(db *badger.DB, repo Repo) {
+
+	if repo.UUID != "" {
+		rm(repo.UUID)
+	}
+
+	if repo.URL != "" {
+		ipfsKeyRmName(repo.URL)
+		dbDelete(db, repo.URL)
+	}
+
+	if repo.IPFS != "" {
+		ipfsClusterRm(repo.IPFS)
+	}
+
+	if repo.Key != "" {
+		ipfsKeyRm(repo.Key)
+	}
+
+	if repo.IPNS != "" {
+		ipfsKeyRm(repo.IPNS)
+	}
+
 }
 
 func onAllRepos(db *badger.DB) {
 	fmt.Println("Refreshing all repos...")
 	fmt.Println()
 
-	ch := make(chan Repo, runtime.NumCPU())
-
-	go func() {
-		err := getRepos(db, ch)
-		if err != nil {
-			fmt.Println("Couldn't get all known repos.")
-			fmt.Println(err.Error())
-			close(ch)
-		}
-	}()
+	ch := dbList(db)
 
 	var wg sync.WaitGroup
 	for c := 1; c <= runtime.NumCPU(); c++ {
 		wg.Add(1)
-		go func(ch chan Repo) {
-			for repo := range ch {
-				onOldRepo(db, repo)
+		go func(ch chan repoerr) {
+			for re := range ch {
+				if re.err != nil {
+					fmt.Println("Couldn't refresh a repo.")
+					fmt.Println(re.err.Error())
+				}
+
+				onOldRepo(db, re.repo)
 			}
 			wg.Done()
 		}(ch)
@@ -68,10 +91,13 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 	fmt.Println()
 
 	// Pull
-	out, err := gitPull(repo.UUID)
+	_, err := gitPull(repo.UUID)
+	if err != nil {
+		return repo, err
+	}
 
 	// Remove old IPFS
-	out, err = ipfsClusterRm(repo.IPFS)
+	ipfsClusterRm(repo.IPFS)
 
 	// Size
 	size, err := dirSize(dirHome + dirGit + "/" + repo.UUID)
@@ -85,18 +111,26 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 	rmax := rmax(size)
 
 	// Add new IPFS
-	out, err = ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
+	out, err := ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
+	if err != nil {
+		return repo, err
+	}
+
 	repo.IPFS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(repo.IPFS))
 
 	// IPNS
 	out, err = ipfsNamePublish(repo.Key, repo.IPFS)
+	if err != nil {
+		return repo, err
+	}
+
 	repo.IPNS = strings.TrimSpace(string(out))
 	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(repo.IPNS))
 
-	err = repo.save(db)
+	err = dbSet(db, repo)
 	if err != nil {
-		fmt.Println("Couldn't save the newly created repo.")
+		fmt.Println("Couldn't save the updated repo.")
 		fmt.Println(err.Error())
 		return repo, err
 	}
@@ -108,23 +142,29 @@ func onOldRepo(db *badger.DB, repo Repo) (Repo, error) {
 func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 
 	// URL
-	link = strings.TrimSpace(link)
-	fmt.Println(aurora.Bold("URL :"), aurora.Blue(link))
+	repo.URL = strings.TrimSpace(link)
+	fmt.Println(aurora.Bold("URL :"), aurora.Blue(repo.URL))
+	if repo.URL == "" {
+		rmRepo(db, repo)
+		return repo, ErrNoURL
+	}
 
 	// UUID
 	buuid, err := uuid.NewRandom()
 	if err != nil {
 		fmt.Println("Couldn't generate a new UUID.")
 		fmt.Println(err.Error())
+		rmRepo(db, repo)
 		return
 	}
 
-	uuid := strings.TrimSpace(buuid.String())
-	fmt.Println(aurora.Bold("UUID :"), uuid)
+	repo.UUID = strings.TrimSpace(buuid.String())
+	fmt.Println(aurora.Bold("UUID :"), repo.UUID)
 
 	// Clone
-	out, err := gitClone(link, uuid)
+	_, err = gitClone(repo.URL, repo.UUID)
 	if err != nil {
+		rmRepo(db, repo)
 		return
 	}
 
@@ -133,6 +173,7 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 	if err != nil {
 		fmt.Println("Couldn't get the size of the git repository.")
 		fmt.Println(err.Error())
+		rmRepo(db, repo)
 		return
 	}
 
@@ -140,47 +181,44 @@ func onNewRepo(db *badger.DB, link string) (repo Repo, err error) {
 	rmax := rmax(size)
 
 	// IPFS-Cluster
-	out, err = ipfsClusterAdd(link, rmin, rmax, uuid)
+	out, err := ipfsClusterAdd(repo.URL, rmin, rmax, repo.UUID)
 	if err != nil {
+		rmRepo(db, repo)
 		return
 	}
 
-	ipfs := strings.TrimSpace(string(out))
-	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(ipfs))
+	repo.IPFS = strings.TrimSpace(string(out))
+	fmt.Println(aurora.Bold("IPFS :"), aurora.Cyan(repo.IPFS))
 
 	// Key
-	out, err = ipfsKeyGen(link)
+	out, err = ipfsKeyGen(repo.URL)
 	if err != nil {
+		rmRepo(db, repo)
 		return
 	}
 
-	key := strings.TrimSpace(string(out))
-	fmt.Println(aurora.Bold("Key :"), key)
+	repo.Key = strings.TrimSpace(string(out))
+	fmt.Println(aurora.Bold("Key :"), repo.Key)
 
 	// IPNS
-	out, err = ipfsNamePublish(key, ipfs)
+	out, err = ipfsNamePublish(repo.Key, repo.IPFS)
 	if err != nil {
+		rmRepo(db, repo)
 		return
 	}
 
-	ipns := strings.TrimSpace(string(out))
-	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(ipns))
+	repo.IPNS = strings.TrimSpace(string(out))
+	fmt.Println(aurora.Bold("IPNS :"), aurora.Cyan(repo.IPNS))
 
-	repo = Repo{
-		UUID: uuid,
-		URL:  link,
-		IPFS: ipfs,
-		Key:  key,
-		IPNS: ipns,
-	}
-
-	err = repo.save(db)
+	// Save
+	err = dbSet(db, repo)
 	if err != nil {
 		fmt.Println("Couldn't save the newly created repo.")
 		fmt.Println(err.Error())
+		rmRepo(db, repo)
 		return
 	}
 
-	fmt.Println("Saved", aurora.Blue(link).String()+".")
+	fmt.Println("Saved", aurora.Blue(repo.URL).String()+".")
 	return repo, err
 }

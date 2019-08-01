@@ -1,0 +1,9 @@
+[Unit]
+Description=Git to IPNS
+
+[Service]
+ExecStart=~/go/bin/gipns
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

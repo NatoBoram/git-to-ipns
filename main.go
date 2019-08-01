@@ -20,10 +20,10 @@ func main() {
 
 	// License
 	fmt.Println("")
-	fmt.Println(aurora.Bold("Gi :"), "Git to IPFS")
+	fmt.Println(aurora.Bold("GIPNS :"), "Throws a Git repository to IPNS.")
 	fmt.Println("Copyright © 2019 Nato Boram")
 	fmt.Println("This program is free software : you can redistribute it and/or modify it under the terms of the " + aurora.Underline("GNU General Public License").String() + " as published by the " + aurora.Underline("Free Software Foundation").String() + ", either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but " + aurora.Bold("without any warranty").String() + " ; without even the implied warranty of " + aurora.Italic("merchantability").String() + " or " + aurora.Italic("fitness for a particular purpose").String() + ". See the " + aurora.Underline("GNU General Public License").String() + " for more details. You should have received a copy of the " + aurora.Underline("GNU General Public License").String() + " along with this program. If not, see " + aurora.Blue("http://www.gnu.org/licenses/").String() + ".")
-	fmt.Println(aurora.Bold("Contact :"), aurora.Blue("https://gitlab.com/NatoBoram/git-to-ipfs"))
+	fmt.Println(aurora.Bold("Contact :"), aurora.Blue("https://gitlab.com/NatoBoram/git-to-ipns"))
 	fmt.Println("")
 
 	// User
@@ -59,9 +59,6 @@ func main() {
 			time.Sleep(24 * time.Hour)
 		}
 	}()
-
-	// Test
-	// receiveURL(db, "git@gitlab.com:NatoBoram/git-to-ipfs.git")
 
 	// Router
 	go initMux(db)
@@ -142,8 +139,17 @@ func initIPFS() (err error) {
 	}
 	fmt.Println(aurora.Bold("IPFS Cluster Control :"), aurora.Blue(path))
 
+	// Connect to Swarm
+	initSwarm()
+
 	fmt.Println("")
 	return
+}
+
+func initSwarm() {
+	for _, pg := range PublicGateways {
+		ipfsSwarmConnect(pg)
+	}
 }
 
 func initBager() (db *badger.DB, err error) {
@@ -183,10 +189,19 @@ func initUser() (path string, err error) {
 func initMux(db *badger.DB) {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/add/", func(w http.ResponseWriter, r *http.Request) { addHandler(db, w, r) }).Methods("POST")
+	// API
+	api := r.StrictSlash(true).PathPrefix("/api").Subrouter()
+
+	// Repos
+	repos := api.PathPrefix("/repos").Subrouter()
+	repos.Methods("GET").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reposGetHandler(db, w, r) })
+	repos.Methods("POST").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reposPostHandler(db, w, r) })
+	repos.Methods("GET").Path("/{link:.*}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { repoGetHandler(db, w, r) })
+	repos.Methods("DELETE").Path("/{link:.*}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) { repoDeleteHandler(db, w, r) })
+
+	// Web Server
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("web").HTTPBox()))
 
-	fmt.Println("Server started at", aurora.Blue("http://localhost:62458/"))
-
+	fmt.Println("Web server started at", aurora.Blue("http://localhost:62458/"))
 	log.Fatal(http.ListenAndServe(":62458", r))
 }

@@ -1,3 +1,5 @@
+// When you need to re-invent the wheel and small self-contained operations.
+
 package main
 
 import (

@@ -1,3 +1,5 @@
+// Bash commands to be executed by the application.
+
 package main
 
 import (
@@ -51,6 +53,19 @@ func ipfsKeyGen(link string) (out []byte, err error) {
 	)
 }
 
+func ipfsKeyRm(key string) (out []byte, err error) {
+	return run(
+		exec.Command("ipfs", "key", "rm", key),
+		".",
+		"Couldn't remove a key.",
+		aurora.Bold("Command :"), "ipfs", "key", "rm", key,
+	)
+}
+
+func ipfsKeyRmName(name string) (out []byte, err error) {
+	return ipfsKeyRm(url.PathEscape(name))
+}
+
 func ipfsNamePublish(key string, ipfs string) (out []byte, err error) {
 	return run(
 		exec.Command("ipfs", "name", "publish", "--key", key, "--quieter", "/ipfs/"+ipfs),
@@ -84,5 +99,23 @@ func ipfsClusterRm(ipfs string) (out []byte, err error) {
 		".",
 		"Couldn't remove the repository from IPFS.",
 		aurora.Bold("Command :"), "ipfs-cluster-ctl", "pin", "rm", aurora.Cyan(ipfs),
+	)
+}
+
+func rm(uuid string) (out []byte, err error) {
+	return run(
+		exec.Command("rm", "--force", "--recursive", uuid),
+		dirHome+dirGit,
+		"Couldn't delete the repository.",
+		aurora.Bold("Command :"), "rm", "--force", "--recursive", uuid,
+	)
+}
+
+func ipfsSwarmConnect(address string) (out []byte, err error) {
+	return run(
+		exec.Command("ipfs", "swarm", "connect", address),
+		".",
+		"Couldn't connect to "+address+".",
+		aurora.Bold("Command :"), "ipfs", "swarm", "connect", aurora.Cyan(address),
 	)
 }

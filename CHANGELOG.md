@@ -18,6 +18,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Security
 
+## [1.0.1] - 2019-08-01
+
+Patches from [github.com/Permaweb/Host/](https://github.com/Permaweb/Host/).
+
+### Added
+
+* Added the following API endpoints :
+
+| Endpoint           | Method   | Description              |
+| ------------------ | -------- | ------------------------ |
+| `/api/repos`       | `GET`    | List of all repositories |
+| `/api/repos`       | `POST`   | Create a repository      |
+| `/api/repos/{url}` | `GET`    | Get this repository      |
+| `/api/repos/{url}` | `DELETE` | Delete this repository   |
+
+* Added a list of repositories.
+* Added **Delete** buttons on the list of repositories.
+* Adds a few selected peers to its swarm on startup for faster discovery.
+* Added a few unit tests.
+* Cross-compile script with lots of obscure operating systems and architectures.
+
+### Changed
+
+* Spinners are now blue when they're actually doing something and black when they're not.
+* Changed name from [Git to IPFS](https://gitlab.com/NatoBoram/git-to-ipfs) to [Git to IPNS](https://gitlab.com/NatoBoram/git-to-ipns).
+* Change config directory to `~/.config/gipns`.
+
+### Removed
+
+* Removed the following API endpoint :
+  * `/api/add`
+
+### Fixed
+
+* Fixed some potential issues when refreshing old repositories that contain errors.
+
 ## [1.0.0] - 2019-07-25
 
 Initial release. It has a web interface, can `git clone` repositories, add them to IPFS Cluster, create IPFS keys, then add the repo to IPNS.

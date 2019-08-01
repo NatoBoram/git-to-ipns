@@ -7,17 +7,20 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 
 	<!-- Bootstrap -->
-	<link href="https://permaweb.io/ipfs/bafybeidxhhjkylkzpudswjbbixwzohrmx4fa5cs35xe7ntxskpgtpaszlm/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" rel="stylesheet">
-	<script src="https://permaweb.io/ipfs/bafybeiagg6b4qhsazsp7u3vq2qg4ivi2s2v4dj6lctp2akys3kkussx624/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-	<script src="https://permaweb.io/ipfs/bafybeid6vxro32jo4fy5bqvwqhnr34rowuqepb75ga6fvhq2vmskztz5wq/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-	<script src="https://permaweb.io/ipfs/bafybeidt325fl7nyxetqlvzvdt6erb5izgayjol3zdwqi6jk3hipfhaolm/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+	<link href="https://bafybeidxhhjkylkzpudswjbbixwzohrmx4fa5cs35xe7ntxskpgtpaszlm.cf-ipfs.com/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" rel="stylesheet">
+	<script src="https://bafybeiagg6b4qhsazsp7u3vq2qg4ivi2s2v4dj6lctp2akys3kkussx624.cf-ipfs.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+	<script src="https://bafybeid6vxro32jo4fy5bqvwqhnr34rowuqepb75ga6fvhq2vmskztz5wq.cf-ipfs.com/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://bafybeidt325fl7nyxetqlvzvdt6erb5izgayjol3zdwqi6jk3hipfhaolm.cf-ipfs.com/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
 	<!-- Hogan.JS -->
-	<script src="https://permaweb.io/ipfs/bafybeih6awiulizmtw2clv4smfbjd6borv733bun6g3226mgv537e6g7ei/hogan-3.0.1.js"></script>
+	<script src="https://bafybeih6awiulizmtw2clv4smfbjd6borv733bun6g3226mgv537e6g7ei.cf-ipfs.com/hogan-3.0.1.js"></script>
 
 	<!-- Templates -->
 	<script src="templates/result_card.js"></script>
 	<script src="templates/spinner_grow.js"></script>
+	<script src="templates/repos_table.js"></script>
+	<script src="templates/alert_danger.js"></script>
+	<script src="templates/alert_success.js"></script>
 
 	<!-- App -->
 	<script src="js/home.js"></script>
@@ -45,22 +48,36 @@
 	<!-- Main -->
 	<main class="container">
 
+		<!-- Alerts when adding a new repo -->
+		<div id="card_result" class="m-3">
+			<!-- Hogan.JS -->
+		</div>
+
 		<!-- Form -->
 		<form class="m-3">
 
 			<!-- Git URL -->
 			<div class="form-group">
 				<label for="gitURLInput">Git URL</label>
-				<input type="text" class="form-control" id="gitURLInput" placeholder="git@gitlab.com:NatoBoram/git-to-ipfs.git" required>
+				<input type="text" class="form-control" id="gitURLInput" placeholder="git@gitlab.com:NatoBoram/git-to-ipns.git" required>
 				<small class="form-text text-muted"></small>
 			</div>
 
 			<!-- Submit -->
-			<button type="button" class="btn btn-primary" onclick="gi.home.submit()">Submit</button>
+			<button type="button" class="btn btn-primary" onclick="gipns.home.submit()">Submit</button>
 		</form>
 
-		<!-- Results -->
-		<div id="card_result" class="m-3"></div>
+		<!-- Alerts when dealing with the list of repos -->
+		<div id="list_alert" class="m-3">
+			<!-- Hogan.JS -->
+		</div>
+
+		<!-- List -->
+		<div id="repos_table" class="m-3">
+			<!-- Hogan.JS -->
+			<div class="spinner-grow m-auto"></div>
+		</div>
+
 	</main>
 
 </body>
