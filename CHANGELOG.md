@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.0.1] - 2019-08-01
+
+Patches from [github.com/Permaweb/Host/](https://github.com/Permaweb/Host/).
+
+### Added
+
 * Added the following API endpoints :
 
 | Endpoint           | Method   | Description              |
@@ -29,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 * Changed name from [Git to IPFS](https://gitlab.com/NatoBoram/git-to-ipfs) to [Git to IPNS](https://gitlab.com/NatoBoram/git-to-ipns).
 * Change config directory to `~/.config/gipns`.
 
-### Deprecated
-
 ### Removed
 
 * Removed the following API endpoint :
@@ -39,8 +53,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 ### Fixed
 
 * Fixed some potential issues when refreshing old repositories that contain errors.
-
-### Security
 
 ## [1.0.0] - 2019-07-25
 
